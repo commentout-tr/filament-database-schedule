@@ -40,6 +40,19 @@ class ScheduleHistory extends Model
         $this->table = Config::get('filament-database-schedule.table.schedule_histories', 'schedule_histories');
     }
 
+    public static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($model) {
+            $max_history_count = Config::get('filament-database-schedule.max_schedule_history_count_for_schedule', null);
+            if (isset($max_history_count) && $max_history_count >= 0) {
+                // Keep only the last $config_last_total records
+                $model::where('schedule_id', $model->schedule_id)->latest()->skip($max_history_count)->delete();
+            }
+        });
+    }
+
     public function command()
     {
         return $this->belongsTo(Schedule::class, 'schedule_id', 'id');
