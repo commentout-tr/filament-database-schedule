@@ -48,7 +48,8 @@ class ScheduleHistory extends Model
             $max_history_count = Config::get('filament-database-schedule.max_schedule_history_count_for_schedule', null);
             if (isset($max_history_count) && $max_history_count >= 0) {
                 // Keep only the last $config_last_total records
-                $model::where('schedule_id', $model->schedule_id)->latest()->skip($max_history_count)->delete();
+                $array = $model::where('schedule_id', $model->schedule_id)->latest()->skip($max_history_count)->get();
+                foreach ($array as $record) { $record->delete();}
             }
         });
     }
