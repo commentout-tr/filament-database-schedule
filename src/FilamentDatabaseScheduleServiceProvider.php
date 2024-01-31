@@ -3,46 +3,58 @@
 namespace HusamTariq\FilamentDatabaseSchedule;
 
 use BladeUI\Icons\Factory;
-use Filament\PluginServiceProvider;
 use HusamTariq\FilamentDatabaseSchedule\Console\Commands\PhpUnitTestJobCommand;
 use HusamTariq\FilamentDatabaseSchedule\Console\Commands\ScheduleClearCacheCommand;
 use HusamTariq\FilamentDatabaseSchedule\Console\Commands\TestJobCommand;
 use HusamTariq\FilamentDatabaseSchedule\Console\Scheduling\Schedule;
-use HusamTariq\FilamentDatabaseSchedule\Filament\Resources\ScheduleResource;
+use Illuminate\Support\Facades\Schema;
+use Filament\Support\Assets\Css;
+use Filament\Support\Assets\Js;
+use Filament\Support\Facades\FilamentAsset;
+use Composer\InstalledVersions;
 use HusamTariq\FilamentDatabaseSchedule\Observer\ScheduleObserver;
 use Spatie\LaravelPackageTools\Package;
 use Illuminate\Console\Scheduling\Schedule as BaseSchedule;
+use Spatie\LaravelPackageTools\PackageServiceProvider;
 
-class FilamentDatabaseScheduleServiceProvider extends PluginServiceProvider
+class FilamentDatabaseScheduleServiceProvider extends PackageServiceProvider
 {
     public static string $name = 'filament-database-schedule';
+    private static string $version = 'dev';
 
-    protected array $resources = [
-        ScheduleResource::class,
-    ];
+    public function configurePackage(Package $package): void
+    {
+        $package
+            ->name(static::$name)
+            ->hasConfigFile()
+            ->hasMigrations()
+            ->hasViews()
+            ->hasCommands()
+            ->hasTranslations();
+    }
 
-    protected array $pages = [
-        // CustomPage::class,
-    ];
+    public function packageBooted(): void
+    {
+        FilamentAsset::register($this->getAssets(), package: $this->getAssetPackageName());
+    }
 
-    protected array $widgets = [
-        // CustomWidget::class,
-    ];
+    protected function getAssetPackageName(): ?string
+    {
+        return static::$name;
+    }
 
-    protected array $styles = [
-        'plugin-filament-database-schedule' => __DIR__ . '/../resources/dist/filament-database-schedule.css',
-    ];
-
-    protected array $scripts = [
-        'plugin-filament-database-schedule' => __DIR__ . '/../resources/dist/filament-database-schedule.js',
-    ];
-
-    // protected array $beforeCoreScripts = [
-    //     'plugin-filament-database-schedule' => __DIR__ . '/../resources/dist/filament-database-schedule.js',
-    // ];
+     protected function getAssets(): array
+    {
+        static::$version = InstalledVersions::getVersion('husam-tariq/filament-database-schedule');
+        $assetId = $this->getAssetPackageName() . static::$version;
 
 
+        return [
+            Js::make($assetId, __DIR__ . '/../resources/dist/filament-database-schedule.js'),
+            Css::make($assetId, __DIR__ . '/../resources/dist/filament-database-schedule.css'),
+        ];
 
+    }
 
     public function register()
     {
@@ -55,8 +67,6 @@ class FilamentDatabaseScheduleServiceProvider extends PluginServiceProvider
         parent::register();
     }
 
-
-
     public function boot()
     {
         if ($this->app->runningInConsole()) {
@@ -65,7 +75,6 @@ class FilamentDatabaseScheduleServiceProvider extends PluginServiceProvider
             ], static::$name);
         }
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
-
         $this->publishes([
             __DIR__ . '/../database/migrations/' => database_path('migrations'),
         ], 'filament-database-schedule-migrations');
@@ -74,10 +83,14 @@ class FilamentDatabaseScheduleServiceProvider extends PluginServiceProvider
         $model = $config->get('filament-database-schedule.model');
         $model::observe(ScheduleObserver::class);
 
-        $this->app->resolving(BaseSchedule::class, function ($schedule) {
-            $schedule = app(Schedule::class, ['schedule' => $schedule]);
-            return $schedule->execute();
-        });
+        try {
+            if (Schema::hasTable($config->get('filament-database-schedule.table.schedules', 'schedules'))) {
+                $this->app->resolving(BaseSchedule::class, function ($schedule) {
+                    $schedule = app(Schedule::class, ['schedule' => $schedule]);
+                    return $schedule->execute();
+                });
+            }
+        } catch (\Exception $e) {}
 
         $this->commands([
             TestJobCommand::class,
@@ -86,14 +99,6 @@ class FilamentDatabaseScheduleServiceProvider extends PluginServiceProvider
         ]);
         parent::boot();
     }
-    public function configurePackage(Package $package): void
-    {
-        $package
-            ->name(static::$name)
-            ->hasConfigFile()
-            ->hasMigrations()
-            ->hasViews()
-            ->hasCommands()
-            ->hasTranslations();
-    }
+
+
 }

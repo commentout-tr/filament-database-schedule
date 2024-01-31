@@ -37,6 +37,16 @@ return [
     'default_ordering_direction' => 'DESC',
 
     /**
+     * Resource navigation icon
+     */
+    "navigation_icon" => 'heroicon-o-rectangle-stack',
+
+    /**
+     * When opening history, is output collapsed
+     */
+    'history_collapsed' => env('FILAMENT_SCHEDULE_HISTORY_COLLAPSED', false),
+
+    /**
      * How many jobs do you want to have on each page ?
      */
     'per_page' => 10,
@@ -81,8 +91,17 @@ return [
             'schedule:*',
             'view:*',
             'phpunit:*'
-        ]
+        ],
+        /**
+         * Alternatively, you can set the "show_supported_only" parameter to true to only allow commands
+         * that are in the supported list.
+         */
+        "show_supported_only" => false,
+        "supported" => [
+            //ex."erp:*"
+        ],
     ],
+
 
     'tool-help-cron-expression' => [
         'enable' => true,

@@ -2,6 +2,7 @@
 
 namespace HusamTariq\FilamentDatabaseSchedule\Models;
 
+use HusamTariq\FilamentDatabaseSchedule\Enums\Status;
 use Illuminate\Console\Scheduling\ManagesFrequencies;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,10 +12,6 @@ class Schedule extends Model
 {
     use ManagesFrequencies;
     use SoftDeletes;
-
-    public const STATUS_INACTIVE = 0;
-    public const STATUS_ACTIVE = 1;
-    public const STATUS_TRASHED = 2;
 
     /**
      * The database table used by the model.
@@ -58,6 +55,7 @@ class Schedule extends Model
         'options' => 'array',
         'options_with_value' => 'array',
         'environments' => 'array',
+        'status' => Status::class,
     ];
 
     /**
@@ -80,12 +78,12 @@ class Schedule extends Model
 
     public function scopeInactive($query)
     {
-        return $query->where('status', false);
+        return $query->where('status', Status::Inactive);
     }
 
     public function scopeActive($query)
     {
-        return $query->where('status', true);
+        return $query->where('status', Status::Active);
     }
 
     public function getArguments(): array
@@ -108,19 +106,19 @@ class Schedule extends Model
 
     public function getOptions(): array
     {
-        $options = $this->options ?? [];
-        $options_with_value = $this->options_with_value[0] ?? [];
-        if (!empty($options_with_value))
-            array_push($options, $options_with_value);
+        $options = collect($this->options ?? []);
 
-        return collect($options)->map(function ($value, $key) {
-            if (!is_array($value) || isset($value['value'])) {
+        $options_with_value = $this->options_with_value ?? [];
+        if (!empty($options_with_value))
+        $options = $options->merge($options_with_value);
+        return $options->map(function ($value, $key) {
+
                 if (is_array($value)) {
                     return "--" . ($value['name']??$key) . "=" . $value['value'];
                 } else {
                     return "--$value";
                 }
-            }
+
         })->toArray();
     }
 
