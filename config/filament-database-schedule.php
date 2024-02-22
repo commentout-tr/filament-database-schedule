@@ -47,6 +47,11 @@ return [
     'history_collapsed' => env('FILAMENT_SCHEDULE_HISTORY_COLLAPSED', false),
 
     /**
+     * Maximum history item count to keep for a task. Leave it null for limitless.
+    */
+    'history_max_count' => env('FILAMENT_SCHEDULE_HISTORY_MAX_COUNT', null),
+
+    /**
      * How many jobs do you want to have on each page ?
      */
     'per_page' => 10,
