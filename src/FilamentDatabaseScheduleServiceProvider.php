@@ -13,6 +13,7 @@ use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
 use Composer\InstalledVersions;
 use HusamTariq\FilamentDatabaseSchedule\Models\ScheduleHistory;
+use HusamTariq\FilamentDatabaseSchedule\Observer\ScheduleHistoryObserver;
 use HusamTariq\FilamentDatabaseSchedule\Observer\ScheduleObserver;
 use Spatie\LaravelPackageTools\Package;
 use Illuminate\Console\Scheduling\Schedule as BaseSchedule;
